@@ -1,7 +1,9 @@
 // import * as THREE from "../node_modules/three/build/three.module.js";
 import * as THREE from "three";
-import { Scene } from "three";
 import Images from './images';
+
+import vertex from "./shaders/vertex.glsl";
+import fragment from "./shaders/fragment.glsl";
 
 function lerp(start, end, t) {
     return start * (1-t) + end * t;
@@ -23,7 +25,7 @@ class Webgl {
         this.links = [...document.querySelectorAll('li')];
         this.scene = new THREE.Scene();
         this.perspective = 1000;
-        this.size = new THREE.Vector2(0,0);
+        this.sizes = new THREE.Vector2(0,0);
         this.offset = new THREE.Vector2(0,0);
         this.uniforms = {
             uTexture: {
@@ -59,6 +61,7 @@ class Webgl {
         this.setUpCamera();
         this.onMousemove();
         this.createMesh();
+        this.render();
     }
 
     get viewport() {
@@ -112,9 +115,23 @@ class Webgl {
 
     createMesh() {
         this.geometry = new THREE.PlaneGeometry(1, 1, 20, 20);
-        this.material = new THREE.MeshBasicMaterial({color: 0xff0000});
+        // this.material = new THREE.MeshBasicMaterial({color: 0xff0000});
+        this.material = new THREE.ShaderMaterial({
+            uniforms: this.uniforms,
+            vertexShader: vertex,
+            fragmentShader: fragment,
+            transparent: true
+        })
         this.mesh = new THREE.Mesh(this.geometry, this.material);
-        this.size.set(250, 350);
+        this.sizes.set(250, 350);
+        this.mesh.scale.set(this.sizes.x, this.sizes.y);
+        this.mesh.position.set(this.offset.x, this.offset.y, 0);
+        this.scene.add(this.mesh);
+    }
+
+    render() {
+        this.renderer.render(this.scene, this.camera);
+        requestAnimationFrame(this.render.bind(this));
     }
 }
 
